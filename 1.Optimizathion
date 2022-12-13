@@ -1,0 +1,80 @@
+# Метод градиентного спуска с постоянным шагом
+import math
+
+import numpy as np
+import matplotlib.pyplot as plot
+
+
+def grad_method():
+    xk = [0.5, 1]
+    e1 = 0.1
+    e2 = 0.15
+    M = 100
+    k = 0
+    tk = 0.1
+    f_end = False
+
+    while True:
+        g_xk = grad_f(xk[0], xk[1])
+        print("x", k, "=", xk)
+        if norma(g_xk) < e1:
+            return xk
+        else:
+            if k >= M:
+                return xk
+            else:
+                xk1 = [xk[0] - tk * g_xk[0], xk[1] - tk * g_xk[1]]
+                if func(xk1[0], xk1[1]) - func(xk[0], xk[1]) < 0:
+                    if norma([xk1[0] - xk[0], xk1[1] - xk[1]]) < e2 \
+                            and math.fabs(func(xk1[0], xk1[1]) - func(xk[0], xk[1])) < e2:
+                        if not f_end:
+                            f_end = True
+                        else:
+                            return xk1
+                    else:
+                        k = k + 1
+                        xk = xk1
+                        f_end = False
+                else:
+                    tk = tk / 2
+
+
+def norma(vec):
+    return math.sqrt(vec[0] * vec[0] + vec[1] * vec[1])
+
+
+def grad_f(x1, x2):
+    return [4 * x1 + x2, x1 + 2 * x2]
+
+
+def func(x1, x2):
+    return 2 * x1 * x1 + x1 * x2 + x2 * x2
+
+
+def get_grid(grid_step):
+    samples = np.arange(-radius, radius, grid_step)
+    x, y = np.meshgrid(samples, samples)
+    return x, y, func(x, y)
+
+
+def draw_chart(point, grid):
+    point_x, point_y, point_z = point
+    grid_x, grid_y, grid_z = grid
+    plot.rcParams.update({
+        'figure.figsize': (4, 4),
+        'figure.dpi': 200,
+        'xtick.labelsize': 4,
+        'ytick.labelsize': 4
+    })
+    ax = plot.figure().add_subplot(111, projection='3d')
+    ax.scatter(point_x, point_y, point_z, color='red')
+    ax.plot_surface(grid_x, grid_y, grid_z, rstride=5, cstride=5, alpha=0.7)
+    plot.show()
+
+
+if __name__ == '__main__':
+    solve = grad_method()
+    minimum = (solve[0], solve[1], func(solve[0], solve[1]))
+    radius = 8
+    print("\nx* = ", solve, "\nf(x*) = ", func(solve[0], solve[1]))
+    draw_chart(minimum, get_grid(0.05))
