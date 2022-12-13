@@ -1,0 +1,93 @@
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+ 
+ 
+def function(x, y):
+    return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
+ 
+ 
+def create_population(num_points, min, max):            # Инициализация исходной популяции
+    population = []
+    for i in range(num_points):
+        population.append([random.uniform(min, max), random.uniform(min, max)])
+    return population
+ 
+ 
+def panmixia(population):                               # Метод панмиксии для отбора пар родителей
+    pairs_parents = []
+    num_points = len(population)
+    for i in range(num_points):
+        rand_parent = random.randint(0, num_points - 1)
+        pairs_parents.append([population[i], population[rand_parent]])
+    return pairs_parents
+ 
+ 
+def line_recombination(pairs_parents):                  # Метод линейной рекомбинации
+    new_population = []
+    for i in range(len(pairs_parents)):
+        alpha = random.uniform(-0.25, 1.25)
+        first_parent = pairs_parents[i][0]
+        second_arent = pairs_parents[i][1]
+        new_population.append([first_parent[0] + alpha * (second_arent[0] - first_parent[0]), first_parent[1] + alpha * (second_arent[1] - first_parent[1])])
+    return new_population
+ 
+ 
+def elite_select(num_points, population):               # Метод элитарного отбора
+    new_population = []
+    for elem in population:
+        new_population.append([function(elem[0], elem[1]), elem[0], elem[1]])
+    n_p = sorted(new_population)
+    resultSelection = []
+ 
+    for i in range(0, num_points):
+        resultSelection.append([n_p[i][1], n_p[i][2]])
+    return resultSelection
+ 
+ 
+def mutate(population, chance, step):                   # Вещественная мутация
+    for i in range(len(population)):
+        for j in range(2):
+            randomValue = random.uniform(0, 1)
+            if randomValue < chance:
+                population[i][j] += step if randomValue < chance/2 else -step
+    return population
+ 
+ 
+def genetic_algorithm(num_points, min_x, max_x, num_generations, chance_mutate, step_mutate):
+    population = create_population(num_points, min_x, max_x)
+    for generation in range(num_generations):
+        pairs_parents = panmixia(population)         # получаем пары родителей
+        children = line_recombination(pairs_parents) # генерируем потомков
+        children = mutate(children, chance_mutate, step_mutate) # производим мутации потомков
+        population += children                       # добавляем пототмков ко всей популяции
+        population = elite_select(num_points, population)
+ 
+    func_value = function(population[0][0], population[0][1])   # Выбор самой приспособленной особи
+    best_point = population[0]
+    for point in population:
+        if function(point[0], point[1]) < func_value:
+            best_point = point
+            func_value = function(point[0], point[1])
+ 
+    print("Размер популяции: ", len(population))
+    return [best_point, func_value]
+ 
+ 
+res = genetic_algorithm(100, -5, 5, 100, 0.01, 0.1)
+print("Лучшая особь: ", res[0])
+print("Значение функции: ", res[1])
+ 
+# Построение графика
+x_p = np.arange(-5, 5, 0.1)
+y_p = np.arange(-5, 5, 0.1)
+x_plot, y_plot = np.meshgrid(x_p, y_p)
+fun_plot = function(x_plot, y_plot)
+ 
+# 3D График
+ax = plt.figure().add_subplot(111, projection='3d')
+# точкa минимума
+ax.scatter(res[0][0], res[0][1], res[1], color='red')
+ax.plot_surface(x_plot, y_plot, fun_plot, rstride=5, cstride=5, alpha=0.7)
+ 
+plt.show()
